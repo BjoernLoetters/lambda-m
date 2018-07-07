@@ -1,0 +1,10 @@
+name:              lambda-m
+version:           1.0.0
+Build-Type:        Simple
+cabal-version:     >= 1.2
+
+executable lambda-m
+  main-is:         Main.hs
+  other-modules:   Tree, Utility, Value, Context, Eval, Evaluator
+  hs-source-dirs:  src
+  build-depends:   base, parsec, containers, time

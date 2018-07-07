@@ -1,0 +1,31 @@
+{
+  "name": "lambda-m",
+  "version": "1.0.0",
+  "description": "Syntax highlighting for the language Lambda M",
+  "publisher": "kuchenkruste",
+  "engines": {
+    "vscode": "^1.0.0"
+  },
+  "categories": ["Themes"],
+  "contributes": {
+    "themes": [
+      {
+        "label": "lm",
+        "uiTheme": "vs-dark",
+        "path": "./themes/lambda-m.json"
+      }
+    ],
+    "languages": [{
+      "id": "Lambda-M Language",
+      "aliases": ["Lambda-M"],
+      "extensions": [".lm"]
+    }],
+    "grammars": [{
+        "language": "Lambda-M Language",
+        "scopeName": "source.lm",
+        "path": "./syntaxes/lm.tmLanguage.json"
+    }]
+  },
+  "author": "kuchenkruste",
+  "license": "MIT"
+}

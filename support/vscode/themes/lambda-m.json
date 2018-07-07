@@ -1,0 +1,91 @@
+{
+    "name": "Lambda-M Theme",
+    "type": "dark",
+    "colors": {
+        
+    },
+    "tokenColors": [
+        {
+            "name": "Tuple",
+            "scope": "tuple.lm",
+            "settings": {
+                "foreground": "#00ad9c",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "List",
+            "scope": "list.lm",
+            "settings": {
+                "foreground": "#00ad9c",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "Keyword Alphanumeric",
+            "scope": "keyword.alphanumeric.lm",
+            "settings": {
+                "foreground": "#6666ea",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "Keyword Symbolic",
+            "scope": "keyword.symbolic.lm",
+            "settings": {
+                "foreground": "#6666ea",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "Symbolic Variable",
+            "scope": "variable.symbolic.lm",
+            "settings": {
+                "foreground": "#f1efee",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "Alphanumeric Variable",
+            "scope": "variable.alphanumeric.lower.lm",
+            "settings": {
+                "foreground": "#e6e2e0"
+            }
+        },
+        {
+            "name": "Alphanumeric Constructor",
+            "scope": "variable.alphanumeric.upper.lm",
+            "settings": {
+                "foreground": "#c33ff3"
+            }
+        },
+        {
+            "name": "Character Literal",
+            "scope": "literal.character.lm",
+            "settings": {
+                "foreground": "#7b9726"
+            }
+        },
+        {
+            "name": "Character Literal",
+            "scope": "literal.string.lm",
+            "settings": {
+                "foreground": "#7b9726"
+            }
+        },
+        {
+            "name": "Escape Sequence",
+            "scope": "literal.escape.lm",
+            "settings": {
+                "foreground": "#407ee7"
+            }
+        },
+        {
+            "name": "Number Literal",
+            "scope": "literal.number.lm",
+            "settings": {
+                "foreground": "#609ec7"
+            }
+        }
+    ]
+}

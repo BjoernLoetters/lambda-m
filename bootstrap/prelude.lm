@@ -1,0 +1,1268 @@
+let curry = f => a => b => f (a, b) in
+let uncurry = f => (a, b) => f a b in
+let compose = f => g => x => f(g(x)) in
+let andThen = f => g => compose g f in
+let swap = f => b => a => f a b in
+let id = x => x in
+let identity = id in
+let isNegative = n => < n 0 in
+let incr = + 1 in
+let decr = swap - 1 in
+let first = (a, b) => a in
+let second = (a, b) => b in
+
+data True | False in
+
+let if = test => then => else => test match {
+    case True => then
+    case False => else
+} in
+
+let and = a => b => a match {
+    case True => b
+    case False => False
+} in
+
+let or = a => b => a match {
+    case True => True
+    case False => b
+} in
+
+let not = a => a match {
+    case True => False
+    case False => True
+} in
+
+let xor = a => b => or (and (not a) b) (and (not b) a) in
+
+let imply = a => b => or (not a) b in
+
+let != = a => b => not (== a b) in
+
+let isPositive = compose not isNegative in
+
+let isSpace = c => c match {
+    case '\t' => True
+    case '\f' => True
+    case '\n' => True
+    case '\r' => True
+    case ' ' => True
+    case _ => False
+} in
+
+let isUpper = let lower = toInt 'A', upper = toInt 'Z' in
+    c => let i = toInt c in and (>= i lower) (<= i upper)
+in
+
+let isLineBreak = c => == c '\n' in
+
+let factorial = n =>
+    let helper = acc => n =>
+        if (<= n 0)
+            acc
+            (helper (* acc n) (decr n))
+    in helper 1 n
+in
+
+let min = a => b => if (< a b) a b in
+let max = a => b => if (< a b) b a in
+let clamp = lower => value => upper => min upper (max value upper) in
+
+data Some a | None in
+
+let orElseGet = option => otherwise => option match {
+    case Some a => a
+    case None => otherwise
+} in
+
+let mapOption = f => option => option match {
+    case Some a => Some (f a)
+    case None => None
+} in
+
+let flatMapOption = f => option => option match {
+    case Some a => f a
+    case None => None
+} in
+
+let foldLeftOption = f => z => option => option match {
+    case None => z
+    case Some a => f z a
+} in
+
+let foldRightOption = compose foldLeftOption swap in
+
+let filterOption = f => option => option match {
+    case None => None
+    case Some a =>
+        if (f a)
+            (Some a)
+            None
+} in
+
+
+
+data Success value | Failure error in
+
+let mapTry = f => try => try match {
+    case Success value => Success (f value)
+    case other => other
+} in
+
+let flatMapTry = f => try => try match {
+    case Success value => f value
+    case other => other
+} in
+
+let foldLeftTry = f => zero => try => try match {
+    case Success value => f zero value
+    case _ => zero
+} in
+
+let foldRightTry = f => zero => try => try match {
+    case Success value => f value zero
+    case _ => zero
+} in
+
+let filterTry = predicate => try => try match {
+    case Success value =>
+        if (predicate value)
+            (Success value)
+            (Failure "predicate check failed")
+    case other => other
+} in
+
+
+data Cons head tail | Nil in
+
+let head = Cons head tail => head in
+
+let isCapitalized = compose isUpper head in
+
+let tail = Cons head tail => tail in
+
+let size = list => list match {
+    case Cons head tail => + 1 (size tail)
+    case Nil => 0
+} in
+
+let zip = xs => ys => (xs, ys) match {
+    case (Cons x xs, Cons y ys) => Cons (x, y) (zip xs ys)
+    case _ => Nil
+} in
+
+let unzip = xs => xs match {
+    case Cons (y, z) xs => let (ys, zs) = (unzip xs) in (Cons y ys, Cons z zs)
+    case _ => (Nil, Nil)
+} in
+
+let ++ = a => b => a match {
+    case Cons head tail => Cons head (++ tail b)
+    case Nil => b
+} in
+
+let reverse = xs =>
+    let helper = xs => acc => xs match {
+        case Cons head tail => helper tail (Cons head acc)
+        case Nil => acc
+    } in
+    helper xs Nil
+in
+
+let isEmpty = something => something match {
+    case None       => True
+    case Some _     => False
+    case Nil        => True
+    case Cons hd tl => False
+    case Failure _  => True
+    case Success _  => False
+} in
+
+let nonEmpty = compose not isEmpty in
+
+let mapList = f => list => list match {
+    case Nil => Nil
+    case Cons hd tl => Cons (f hd) (mapList f tl)
+} in
+
+let flatMapList = f => list => list match {
+    case Nil => Nil
+    case Cons hd tl => ++ (f hd) (flatMapList f tl)
+} in
+
+let foldLeftList = f => z => list => list match {
+    case Nil => z
+    case Cons hd tl => foldLeftList f (f z hd) tl
+} in
+
+let filterList = f => list => list match {
+    case Nil => Nil
+    case Cons hd tl =>
+        if (f hd)
+            (Cons hd (filterList f tl))
+            (filterList f tl)
+} in
+
+let foldRightList = f => z => list => foldLeftList (swap f) z (reverse list) in
+
+let reduceLeft = f => Cons hd tl => foldLeftList f hd tl in
+
+let reduceRight = f => Cons hd tl => foldRightList f hd tl in
+
+let startsWith = needle => string => (needle, string) match {
+    case (Cons hd atl, Cons hd btl) => startsWith atl btl
+    case (Nil, xs) => True
+    case xs => False
+} in
+
+let splitAt = n => string =>
+    let helper = acc => n => string =>
+        if (<= n 0)
+            (reverse acc, string)
+            (string match {
+                case Nil => (reverse acc, Nil)
+                case Cons hd tl => helper (Cons hd acc) (decr n) tl
+            })
+    in helper Nil n string
+in
+
+let drop = n => string => second (splitAt n string) in
+
+let dropWhile = p => list => list match {
+    case Cons hd tl =>
+        if (p hd) (dropWhile p tl) (Cons hd tl)
+    case Nil => Nil
+} in
+
+let take = n => string => first (splitAt n string) in
+
+let takeWhile = p => list => list match {
+    case Cons hd tl =>
+        if (p hd) (Cons hd (takeWhile p tl)) Nil
+    case Nil => Nil
+} in
+
+let partition = p => list => list match {
+    case Cons hd tl =>
+        let (left, right) = (partition p tl) in
+        if (p hd)
+            (Cons hd left, right)
+            (left, Cons hd right)
+    case Nil => (Nil, Nil)
+} in
+
+let withFormat = fmt => f =>
+    let helper = acc => fmt => fmt match {
+        case Nil => f (reverse acc)
+        case Cons '%' (Cons 's' rest) => s => helper (++ (reverse s) acc) rest
+        case Cons '%' (Cons 'c' rest) => c => helper (Cons c acc) rest
+        case Cons '%' (Cons 'b' rest) => b => helper (++ (reverse (show b)) acc) rest
+        case Cons '%' (Cons 'd' rest) => d => helper (++ (reverse (show d)) acc) rest
+        case Cons c rest => helper (Cons c acc) rest
+    } in helper Nil fmt
+in
+
+let format = (swap withFormat) identity in
+
+let printf = (swap withFormat) print in
+
+data Parser f in
+data ParseSuccess a rest | ParseFailure error rest | ParseError error rest in
+
+let asTry = result => result match {
+    case ParseSuccess result _ => Success result
+    case ParseFailure error _  => Failure error
+    case ParseError error _ => Failure error
+} in
+
+let parse = Parser f => input => f input in
+
+let parseAll = Parser f => input => (f input) match {
+    case ParseSuccess result Nil => ParseSuccess result Nil
+    case ParseSuccess _ (Cons hd _) => ParseError (format "unexpected input '%c', expected end of source" hd) rest
+    case ParseFailure error rest => ParseError error rest
+    case other => other
+} in
+
+let returnParser = element => Parser (ParseSuccess element) in
+
+let parseAny = Parser (input => input match {
+    case Nil => ParseError "unexpected end of stream" Nil
+    case Cons hd tl => ParseSuccess hd tl
+}) in
+
+let parseChar = char => Parser (input => input match {
+    case Nil => ParseError (format "unexpected end of stream, expected '%c'" char) Nil
+    case Cons hd tl =>
+        if (== hd char)
+            (ParseSuccess hd tl)
+            (ParseFailure (format "unexpected character '%c', expected '%c'" hd char) input)
+}) in
+
+let parseString = string => Parser (input =>
+    if (startsWith string input)
+        (ParseSuccess string (drop (size string) input))
+        (ParseError (format "unexpected input start '%s...', expected '%s'" (take (max (size string) 10) input) string) input)
+) in
+
+let parseSpace = Parser (input => input match {
+    case Nil => ParseError "unexpected end of stream, expected space" Nil
+    case Cons hd tl =>
+        if (isSpace hd)
+            (ParseSuccess hd tl)
+            (ParseError (format "unexpected character '%c', expected space" hd) input)
+}) in
+
+let parseMany = parser => Parser (input =>
+    let helper = acc => input => (parse parser input) match {
+        case ParseSuccess result rest =>
+            if (== rest input)
+                (ParseSuccess (reverse acc) rest)
+                (helper (Cons result acc) rest)
+        case ParseFailure error rest =>
+            ParseSuccess (reverse acc) rest
+        case ParseError error rest =>
+            ParseSuccess (reverse acc) rest
+    } in helper Nil input
+) in
+
+let parseSpaces = parseMany parseSpace in
+
+let mapParser = f => parser => Parser (input =>
+    (parse parser input) match {
+        case ParseSuccess result rest =>
+            ParseSuccess (f result) rest
+        case ParseFailure error rest => ParseError error rest
+        case other => other
+    }
+) in
+
+let flatMapParser = f => parser => Parser (input =>
+    (parse parser input) match {
+        case ParseSuccess result rest =>
+            parse (f result) rest
+        case ParseFailure error rest => ParseError error rest
+        case other => other
+    }
+) in
+
+let parseBoth = a => b => flatMapParser (ares => mapParser (bres => (ares, bres)) b) a in
+
+let parseNonEmptyMany = parser => mapParser (uncurry Cons) (parseBoth parser (parseMany parser)) in
+
+let parseEither = a => b => Parser (input => (parse a input) match {
+    case ParseSuccess result rest => ParseSuccess result rest
+    case ParseFailure error rest => parse b input
+    case other => other
+}) in
+
+let parseFail = error => Parser (input => ParseFailure error input) in
+
+let parseTry = p => Parser (input => (parse p input) match {
+    case ParseError error rest => ParseFailure error rest
+    case other => other
+}) in
+
+let parseChoice = choice => foldLeftList parseEither (parseFail "unexpected input (empty choice)") choice in
+
+let parseOneOf = string => parseChoice (mapList parseChar string) in
+
+let parseNoneOf = string => Parser (input => (parse (parseOneOf string) input) match {
+    case ParseSuccess _ rest => ParseError (format "unexpected character, expected a character which is not one of '%s'" string) input
+    case ParseFailure _ rest => input match {
+        case Nil => ParseError (format "unexpected end of stream, expected a character which is not one of '%s'" string) Nil
+        case Cons result rest => ParseSuccess result rest
+    }
+    case ParseError _ rest => input match {
+        case Nil => ParseError (format "unexpected end of stream, expected a character which is not one of '%s'" string) Nil
+        case Cons result rest => ParseSuccess result rest
+    }
+}) in
+
+let parseDigit = parseOneOf "0123456789" in
+
+let parseTakeLeft = a => b => mapParser first (parseBoth a b) in
+
+let parseTakeRight = a => b => mapParser second (parseBoth a b) in
+
+let parseNonEmptySep = p => q => mapParser (uncurry Cons) (parseBoth p (parseMany (parseTakeRight q p))) in
+
+let parseSep = p => q => Parser (input => (parse (parseNonEmptySep p q) input) match {
+    case ParseSuccess result rest => ParseSuccess result rest
+    case ParseFailure _ rest => ParseSuccess Nil rest
+    case ParseError _ rest => ParseSuccess Nil rest
+}) in
+
+let parseBetween = left => p => right => parseTakeRight left (parseTakeLeft p right) in
+
+let parseLog = string => parser => Parser (input =>
+    (debug (format "-> trying parser '%s' at '%s'" string (takeWhile (compose not isLineBreak) input)) (parse parser input)) match {
+        case ParseSuccess result rest => debug (format "<- parser '%s' succeeded" string) (ParseSuccess result rest)
+        case ParseFailure error rest => debug (format "<- parser '%s' failed with error '%s'" string error) (ParseFailure error rest)
+        case ParseError error rest => debug (format "<- parser '%s' failed with error '%s' (backtrace disabled)" string error) (ParseError error rest)
+    }
+) in
+
+let parseBetweenSpaces = p => parseBetween parseSpaces p parseSpaces in
+
+let parseLetter = parseOneOf "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" in
+
+let parseAlphaNumeric = parseEither parseLetter parseDigit in
+
+let parseFilter = predicate => message => parser => Parser (input =>
+    (parse parser input) match {
+        case ParseSuccess result rest =>
+            if (predicate result)
+                (ParseSuccess result rest)
+                (ParseError (message result) input)
+        case error => error
+    }
+) in
+
+let parseOptional = parser => Parser (input => (parse parser input) match {
+    case ParseSuccess result rest => ParseSuccess (Some result) rest
+    case ParseFailure error rest => ParseSuccess None rest
+    case ParseError error rest => ParseSuccess None rest
+}) in
+
+let map = f => something => something match {
+    case Some a => mapOption f something
+    case None => mapOption f something
+    case Cons hd tl => mapList f something
+    case Nil => mapList f something
+    case Parser _ => mapParser f something
+    case Success _ => mapTry f something
+    case Failure _ => mapTry f something
+} in
+
+let flatMap = f => something => something match {
+    case Some a => flatMapOption f something
+    case None => flatMapOption f something
+    case Cons hd tl => flatMapList f something
+    case Nil => flatMapList f something
+    case Parser _ => flatMapParser f something
+    case Success _ => flatMapTry f something
+    case Failure _ => flatMapTry f something
+} in
+
+let flatten = flatMap identity in
+
+let range = start => end => step =>
+    if (isNegative step)
+        (let negRange = start => end
+            if (< start end)
+                Nil
+                (Cons start (negRange (- start step) end))
+        in negRange start end)
+        (let posRange = start => end =>
+            if (> start end)
+                Nil
+                (Cons start (posRange (+ start step) end))
+        in posRange start end)
+in
+
+let indexOf = element => list =>
+    let indexOfHelper = list => index => list match {
+        case Nil => None
+        case Cons hd tl =>
+            if (== hd element)
+                (Some index)
+                (indexOfHelper tl (incr index))
+    } in indexOfHelper list 0
+in
+
+let find = f => list => list match {
+    case Nil => None
+    case Cons hd tl =>
+        if (f hd) (Some hd)
+        (find f tl)
+} in
+
+let slice = start => end => list =>
+    let sliceHelper = index => acc => list => list match {
+        case Nil => acc
+        case Cons hd tl =>
+            if (>= index end) acc
+            (if (>= index start)
+                (sliceHelper (incr index) (Cons hd acc) tl)
+                (sliceHelper (incr index) acc tl))
+    } in reverse (sliceHelper 0 Nil list)
+in
+
+let intersperse = element => list => list match {
+    case Nil => Nil
+    case Cons hd (Cons next rest) => Cons hd (Cons element (intersperse element (Cons next rest)))
+    case Cons hd Nil => Cons hd Nil
+} in
+
+let foldLeft = f => z => something => something match {
+    case Some a => foldLeftOption f z something
+    case None => foldLeftOption f z something
+    case Cons hd tl => foldLeftList f z something
+    case Nil => foldLeftList f z something
+    case Success _ => foldLeftTry f z something
+    case Failure _ => foldLeftTry f z something
+} in
+
+let merge = foldLeft ++ Nil in
+
+let intercalate = element => list => merge (intersperse element list) in
+
+let foldRight = f => z => something => something match {
+    case Some a => foldRightOption f z something
+    case None => foldRightOption f z something
+    case Cons hd tl => foldRightList f z something
+    case Nil => foldRightList f z something
+    case Success _ => foldLeftTry f z something
+    case Failure _ => foldLeftTry f z something
+} in
+
+let filter = f => something => something match {
+    case Some a => filterOption f something
+    case None => filterOption f something
+    case Cons hd tl => filterList f something
+    case Nil => filterList f something
+    case Success _ => filterTry f something
+    case Failure _ => filterTry f something
+} in
+
+let naturals = let helper = n => Cons n (helper (incr n)) in helper 0 in
+
+let exists = f => something => foldLeft or False (map f something) in
+let contains = element => exists (element' => == element element') in
+let forall = f => something => foldLeft and True (map f something) in
+
+let isPrime = n =>
+    if (<= n 1) False
+    (forall (x => != 0 (% n x)) (range 2 (sqrt n) 1))
+in
+
+let do = swap flatMap in
+let doIO = swap flatMapIO in
+let sequenceIO = list => mapIO reverse (foldLeft (acc => next =>
+    flatMapIO (acc =>
+        mapIO (swap Cons acc) next
+    ) acc
+) (returnIO Nil) list) in
+
+let println = string => doIO (print string) (_ => print "\n") in
+
+data Var name
+   | Ign
+   | App left right
+   | Abs left right
+   | Num value
+   | Chr value
+   | Tuple values
+   | Match value cases
+   | Let bindings value
+   | Data constructors value
+   | Macro left right value
+in
+
+data XAbs left right
+   | XApp left right
+   | XAnn left right
+   | XMatch value cases
+   | XVar name
+   | XTuple values
+   | XNum value
+   | XChr value
+   | XLet bindings tree
+   | XData left right tree
+   | XImport path tree
+in
+
+let keywords = ["let", "in", "match", "case", "data", ":", "=>", "=", "|", "import", ","] in
+
+let
+    parseXTree = parseBetweenSpaces (parseChoice [
+        parseTry parseXLet,
+        parseTry parseXData,
+        parseTry parseXImport,
+        parseXAbs
+    ]),
+
+    parseXAbs = map (uncurry (foldLeft XAbs))
+        (parseBoth
+            parseXApp
+            (parseOptional
+                (parseTakeRight (parseXToken "=>") parseXTree))),
+
+    parseXApp = map (reduceLeft XApp)
+        (parseNonEmptySep parseXAnn parseSpaces),
+
+    parseXAnn = map (uncurry (foldLeft XAnn))
+        (parseBoth
+            parseXMatch
+            (parseOptional
+                (parseTakeRight (parseXToken ":") parseXTree))),
+
+    parseXCases = parseTakeRight (parseXToken "case") (map (uncurry XAbs) (parseBoth parseXApp (parseTakeRight (parseXToken "=>") parseXTree))),
+    parseXMatch = map (uncurry (foldLeft XMatch))
+        (parseBoth
+            parseXValue
+            (parseOptional
+                (parseBetween
+                    (parseBoth (parseXToken "match") (parseXToken "{"))
+                    (parseMany parseXCases)
+                    (parseXToken "}")))),
+
+    parseXValue = parseChoice [
+        parseTry parseXTuple,
+        parseTry parseXNum,
+        parseTry parseXChr,
+        parseTry parseXString,
+        parseTry parseXList,
+        parseXVar
+    ],
+
+    parseXList = map (string => foldRight (next => previous =>
+            XApp (XApp (XVar "Cons") next) previous
+        ) (XVar "Nil") string) (parseBetween
+            (parseChar '[')
+            (parseSep parseXTree (parseChar ','))
+            (parseChar ']')),
+
+    parseXString = map (string => foldRight (next => previous =>
+            XApp (XApp (XVar "Cons") (XChr next)) previous
+        ) (XVar "Nil") string) (parseBetween
+            (parseChar '"')
+            (parseMany (parseNoneOf (Cons '"' Nil)))
+            (parseChar '"')),
+
+    parseXVar = map XVar
+        (parseFilter
+            (compose not (swap contains keywords))
+            (format "'%s' is a reserved keyword")
+            (parseEither (parseTry parseSymbolicIdentifier) parseAlphanumericIdentifier)),
+
+    parseAlphanumericIdentifier =
+        map (uncurry ++) (parseBoth
+            (map (uncurry ++) (parseBoth
+                (parseNonEmptyMany parseAlphaNumeric)
+                (parseMany parseDigit)))
+            (parseMany (parseChar '\''))),
+
+    parseSymbolicIdentifier =
+        map (uncurry ++) (parseBoth
+            (map (uncurry ++) (parseBoth
+                (parseNonEmptyMany (parseOneOf "+*~#-:.$%&/\\=?!^°<>|@"))
+                (parseMany parseDigit)))
+            (parseMany (parseChar '\''))),
+
+    parseXTuple = map XTuple
+        (parseBetween
+            (parseChar '(')
+            (parseSep parseXTree (parseChar ','))
+            (parseChar ')')),
+
+    parseXNum = map ((sign, number) => compose XNum toInt sign match {
+        case Some _ => Cons '-' number
+        case None => number
+    }) (parseBoth (parseOptional (parseChar '-')) (parseNonEmptyMany parseDigit)),
+
+    parseXChr = map XChr
+        (parseBetween
+            (parseChar '\'')
+            parseAny
+            (parseChar '\'')),
+
+    parseXLet = map (uncurry XLet)
+        (parseBoth
+            (parseTakeRight (parseXToken "let")
+                (parseNonEmptySep
+                    (parseBoth
+                        parseXApp
+                        (parseTakeRight (parseXToken "=") parseXTree))
+                    (parseXToken ",")))
+            (parseTakeRight (parseXToken "in") parseXTree)),
+
+    parseXImport = map (uncurry XImport) (parseBoth
+        (parseTakeRight (parseXToken "import") (parseBetween
+             (parseChar '"')
+             (parseMany (parseNoneOf (Cons '"' Nil)))
+             (parseChar '"')))
+        (parseTakeRight (parseXToken "in") (parseMany parseAny))),
+
+    parseXData = map (((left, right), tree) => XData left right tree)
+        (parseBoth
+            (parseTakeRight (parseXToken "data")
+                (parseBoth parseXApp (
+                    parseTakeRight
+                        (parseXToken "=")
+                        (parseNonEmptySep parseXApp (parseXToken "|"))
+
+                ))
+            )
+            (parseTakeRight (parseXToken "in") parseXTree)),
+
+    parseXToken = compose parseBetweenSpaces parseString
+in
+
+let translate = tree => tree match {
+    case XAbs left right =>
+        Abs (translate left) (translate right)
+
+    case XApp left right =>
+        App (translate left) (translate right)
+
+    case XAnn left right =>
+        translate left
+
+    case XMatch value cases =>
+        Match (translate value) (map translate cases)
+
+    case XVar name =>
+        Var name
+
+    case XTuple values =>
+        Tuple (map translate values)
+
+    case XNum value =>
+        Num value
+
+    case XChr value =>
+        Chr value
+
+    case XLet bindings tree =>
+        let f = (left, right) => (translate left, translate right) in Let (map f bindings) (translate tree)
+
+    case XData left right tree =>
+        let helper = tree => tree match {
+            case XApp left _ => App (helper left) (Var "a")
+            case XVar name => Var name
+        } in Data (map helper right) (translate tree)
+} in
+
+data TypeApp left right
+   | TypeVar id ref
+   | TypeName name
+   | TypeTuple types
+   | TypeFun left right
+in
+
+let integerType = TypeName "Integer",
+    naturalType = TypeName "Natural",
+    charType = TypeName "Char",
+    unitType = TypeTuple Nil,
+    showType = let letters = map toChar (range (toInt 'a') (toInt 'z') 1) in type => type match {
+        case TypeVar id ref =>
+            let letter = head (drop (% id 26) letters),
+                number = show (/ id 26)
+            in Cons letter number
+        case TypeApp (TypeFun lleft lright) right =>
+            Cons '(' (++ (showType (TypeFun lleft lright)) (++ ") " (showType right)))
+        case TypeApp left (TypeFun rleft rright) =>
+            ++ (showType left) (++ " (" (++ (showType (TypeFun rleft rright)) ")"))
+        case TypeApp left (TypeApp rleft rright) =>
+            ++ (showType left) (++ " (" (++ (showType (TypeApp rleft rright)) ")"))
+        case TypeApp left right =>
+            ++ (showType left) (Cons ' ' (showType right))
+        case TypeTuple types =>
+            ++ (Cons '(' (intercalate ", " (map showType types))) ")"
+        case TypeName name => name
+        case TypeFun (TypeFun lleft lright) right =>
+            ++ (Cons '(' (showType (TypeFun lleft lright))) (++ ") -> " (showType right))
+        case TypeFun left right =>
+            ++ (showType left) (++ " -> " (showType right))
+    }
+in
+
+data TypeContext counter types in
+
+let emptyTypeContext = mapIO (swap TypeContext Nil) (newRef 0),
+
+    prettyTypeContext = TypeContext _ types =>
+        format "[%s]" (intercalate ", " (map ((key, type) => format "'%s': %s" key (showType type)) types)),
+
+    newTypeVar = TypeContext counter _ => doIO (readRef counter) (id =>
+        doIO (writeRef counter (incr id)) (_ =>
+            mapIO (TypeVar id) (newRef None)
+        )
+    ),
+
+    insertType = name => type => TypeContext counter types =>
+        let insert = key => value => list => list match {
+            case Cons (okey, ovalue) tl =>
+                if (== okey key)
+                    (Cons (key, value) tl)
+                    (Cons (okey, ovalue) (insert key value tl))
+            case Nil => Cons (key, value) Nil
+        } in TypeContext counter (insert name type types),
+
+    containsType = name => TypeContext _ types =>
+        exists ((key, _) => == key name) types,
+
+    fetchType = name => TypeContext _ types => map second (find ((key, _) => == key name) types),
+
+    combineTypeContext = TypeContext aref atypes => TypeContext bref btypes =>
+        flatMapIO (acounter =>
+            mapIO (bcounter =>
+                let ref = if (>= acounter bcounter) aref bref in
+                let insert = key => value => list => list match {
+                    case Cons (okey, ovalue) tl =>
+                        if (== okey key)
+                            (Cons (key, value) tl)
+                            (Cons (okey, ovalue) (insert key value tl))
+                    case Nil => Cons (key, value) Nil
+                } in
+                let combined = foldLeft (previous => (bkey, value) => insert bkey value previous) atypes btypes in
+                    TypeContext ref combined
+            ) (readRef bref)
+        ) (readRef aref)
+in
+
+data TypeCheck f in
+let returnTypeCheck = value => TypeCheck (context => returnIO (Success value)),
+    failTypeCheck = error => TypeCheck (context => returnIO (Failure error)),
+    mapTypeCheck = f => TypeCheck g => TypeCheck (context => mapIO (map f) (g context)),
+    flatMapTypeCheck = f => TypeCheck g => TypeCheck (context => flatMapIO (try => (map f try) match {
+        case Success (TypeCheck f) => f context
+        case other => returnIO other
+    }) (g context)),
+    runWith = context => TypeCheck f => TypeCheck (_ => f context),
+    runTypeCheck = TypeCheck f => context => f context,
+    runWithEmptyTypeContext = typeCheck => flatMapIO (runTypeCheck typeCheck) emptyTypeContext,
+    sequenceTypeCheck = list => mapTypeCheck reverse (foldLeft (acc => next =>
+        flatMapTypeCheck (previous => mapTypeCheck (swap Cons previous) next) acc
+    ) (returnTypeCheck Nil) list),
+    getTypeCheckContext = TypeCheck (context => returnIO (Success context)),
+    typeCheckFromIO = io => TypeCheck (_ => mapIO Success io)
+in
+
+let zonkType = type =>
+    let helper = seen => type => type match {
+        case TypeName name =>
+            returnIO type
+        case TypeVar id ref =>
+            if (contains id seen)
+                (returnIO type)
+                (flatMapIO (value => value match {
+                    case Some value =>
+                        (flatMapIO (value =>
+                            mapIO (_ => value) (writeRef ref (Some value))
+                        ) (helper (Cons id seen) value))
+                    case None => returnIO type
+                }) (readRef ref))
+        case TypeTuple (Cons type Nil) =>
+            helper seen type
+        case TypeTuple values =>
+            mapIO TypeTuple (sequenceIO (map (helper seen) values))
+        case TypeFun left right =>
+            flatMapIO (left =>
+                mapIO (right =>
+                    TypeFun left right
+                ) (helper seen right)
+            ) (helper seen left)
+        case TypeApp left right =>
+            flatMapIO (left =>
+                mapIO (right =>
+                    TypeApp left right
+                ) (helper seen right)
+            ) (helper seen left)
+    } in typeCheckFromIO (helper Nil type)
+in
+
+let isRecursiveType = type => id => type match {
+    case TypeVar oid _ => == id oid
+    case TypeApp left right => or (isRecursiveType left id) (isRecursiveType right id)
+    case TypeFun left right => or (isRecursiveType left id) (isRecursiveType right id)
+    case TypeTuple types => exists (swap isRecursiveType id) types
+    case _ => False
+} in
+
+let unifyTypes = a => b =>
+    flatMapTypeCheck (a =>
+        flatMapTypeCheck (b =>
+            let helper = a => b =>
+                (a, b) match {
+                    case (TypeVar id aref, b) => 
+                        if (isRecursiveType b id)
+                            (returnTypeCheck ())
+                            (flatMapTypeCheck (a => a match {
+                                case Some a => helper a b
+                                case None   => typeCheckFromIO (writeRef aref (Some b))
+                            }) (typeCheckFromIO (readRef aref)))
+                    case (a, TypeVar id ref) =>
+                        helper (TypeVar id ref) a
+                    case (TypeName aname, TypeName bname) =>
+                        if (== aname bname)
+                            (returnTypeCheck ())
+                            (failTypeCheck (format "type mismatch between type '%s' and type '%s'" (showType (TypeName aname)) (showType (TypeName bname))))
+                    case (TypeTuple avalues, TypeTuple bvalues) =>
+                        mapTypeCheck (_ => ()) (sequenceTypeCheck (map (uncurry helper) (zip avalues bvalues)))
+                    case (TypeTuple (Cons a Nil), b) =>
+                        helper a b
+                    case (a, TypeTuple (Cons b Nil)) =>
+                        helper a b
+                    case (TypeApp aleft aright, TypeApp bleft bright) =>
+                        flatMapTypeCheck (_ => helper aright bright) (helper aleft bleft)
+                    case (TypeFun aleft aright, TypeFun bleft bright) =>
+                        flatMapTypeCheck (_ => helper aright bright) (helper aleft bleft)
+                    case (a, b) =>
+                        failTypeCheck (format "type mismatch between type '%s' and type '%s'" (showType a) (showType b))
+                }
+            in helper a b
+        ) (zonkType b)
+    ) (zonkType a)
+in
+
+let containsTypeVar = TypeVar aid _ => TypeContext _ types =>
+    let helper = (_, type) => flatMapTypeCheck (type => type match {
+        case TypeVar bid _ => == aid bid
+        case _ => False
+    }) (zonkType type) in mapTypeCheck (exists id) (sequenceTypeCheck (map helper types))
+in
+
+let freshType = type => flatMapTypeCheck (type =>
+    let helper = bound => type => type match {
+        case TypeApp left right =>
+            flatMapTypeCheck ((ltype, bound) =>
+                mapTypeCheck ((rtype, bound) =>
+                    (TypeApp ltype rtype, bound)
+                ) (helper bound right)
+            ) (helper bound left)
+        case TypeVar id ref =>
+            (find ((oid, _) => == oid id) bound) match {
+                case Some (_, var) => returnTypeCheck (var, bound)
+                case None =>
+                    flatMapTypeCheck (context =>
+                        flatMapTypeCheck (contained => 
+                            if contained
+                                (returnTypeCheck (TypeVar id ref, bound))
+                                (mapTypeCheck (var => (var, Cons (id, var) bound)) (typeCheckFromIO (newTypeVar context)))
+                        ) (containsTypeVar (TypeVar id ref) context)
+                    ) getTypeCheckContext
+            }
+        case TypeName name =>
+            returnTypeCheck (TypeName name, bound)
+        case TypeTuple (Cons type Nil) => freshType type
+        case TypeTuple types =>
+            mapTypeCheck ((types, bound) => (TypeTuple (reverse types), bound)) (foldLeft (previous => next =>
+                flatMapTypeCheck ((previous, bound) =>
+                    mapTypeCheck ((next, bound) =>
+                        (Cons next previous, bound)
+                    ) (helper bound next)
+                ) previous
+            ) (returnTypeCheck (Nil, bound)) types)
+        case TypeFun left right =>
+            flatMapTypeCheck ((ltype, bound) =>
+                mapTypeCheck ((rtype, bound) =>
+                    (TypeFun ltype rtype, bound)
+                ) (helper bound right)
+            ) (helper bound left)
+    } in mapTypeCheck first (helper Nil type)
+    ) (zonkType type)
+in
+
+let typeFromTree = vars => tree =>
+    let helper = vars => tree => tree match {
+        case XAbs left right =>
+            flatMapTypeCheck ((left, vars) =>
+                mapTypeCheck ((right, vars) =>
+                    (TypeFun left right, vars)
+                ) (helper vars right)
+            ) (helper vars left)
+
+        case XApp left right =>
+            flatMapTypeCheck ((left, vars) =>
+                mapTypeCheck ((right, vars) =>
+                    (TypeApp left right, vars)
+                ) (helper vars right)
+            ) (helper vars left)
+
+        case XVar name =>
+            if (isCapitalized name)
+                (returnTypeCheck (TypeName name, vars))
+                ((find ((key, _) => == key name) vars) match {
+                    case Some (_, var) => returnTypeCheck (var, vars)
+                    case None => mapTypeCheck (var => (var, Cons (name, var) vars)) (flatMapTypeCheck (compose typeCheckFromIO newTypeVar) getTypeCheckContext)
+                })
+
+        case XTuple (Cons tree Nil) =>
+            helper vars tree
+
+        case XTuple values =>
+            mapTypeCheck ((types, vars) => (compose TypeTuple reverse types, vars)) (foldLeft (previous => next =>
+                flatMapTypeCheck ((previous, vars) =>
+                    flatMapTypeCheck ((next, vars) =>
+                        (Cons next previous, vars)
+                    ) (helper vars next)
+                ) previous
+            ) (returnTypeCheck (Nil, vars)) values)
+
+        case _ => failTypeCheck "illegal type pattern"
+    } in mapTypeCheck first (helper vars tree)
+in
+
+let typeCheck = tree => tree match {
+        case XAbs left right =>
+            flatMapTypeCheck ((ltype, context) =>
+                mapTypeCheck (TypeFun ltype) (runWith context (typeCheck right))
+            ) (bind left)
+
+        case XApp left right =>
+            flatMapTypeCheck (left =>
+            flatMapTypeCheck (right =>
+            flatMapTypeCheck (context =>
+            flatMapTypeCheck (amvar =>
+            flatMapTypeCheck (bmvar =>
+            flatMapTypeCheck (_ =>
+                mapTypeCheck (_ => bmvar) (unifyTypes amvar right)
+            ) (unifyTypes (TypeFun amvar bmvar) left)
+            ) (typeCheckFromIO (newTypeVar context))
+            ) (typeCheckFromIO (newTypeVar context))
+            ) getTypeCheckContext
+            ) (typeCheck right)
+            ) (typeCheck left)
+
+        case XAnn left right =>
+            flatMapTypeCheck (left =>
+                flatMapTypeCheck (right =>
+                    mapTypeCheck (_ => right) (unifyTypes left right)
+                ) (typeFromTree Nil right)
+            ) (typeCheck left)
+
+        case XMatch value cases =>
+            flatMapTypeCheck (valueType =>
+                let caseTypes = sequenceTypeCheck (map (XAbs pattern body =>
+                    flatMapTypeCheck ((ptype, context) =>
+                        flatMapTypeCheck (_ =>
+                            (runWith context (typeCheck body))
+                        ) (unifyTypes valueType ptype)
+                    ) (bind pattern)
+                ) cases) in
+                    flatMapTypeCheck (caseTypes =>
+                        flatMapTypeCheck (context =>
+                            foldLeft (previous => next =>
+                                flatMapTypeCheck (previous =>
+                                    mapTypeCheck (_ => previous) (unifyTypes previous next)
+                                ) previous
+                            ) (typeCheckFromIO (newTypeVar context)) caseTypes
+                        ) getTypeCheckContext
+                    ) caseTypes
+            ) (typeCheck value)
+
+        case XVar name =>
+            flatMapTypeCheck (context => (fetchType name context) match {
+                case Some type => freshType type
+                case None => failTypeCheck (format "unknown variable '%s'" name)
+            }) getTypeCheckContext
+
+        case XTuple values =>
+            mapTypeCheck TypeTuple (sequenceTypeCheck (map typeCheck values))
+
+        case XNum value =>
+            if (< value 0)
+                (returnTypeCheck integerType)
+                (returnTypeCheck naturalType)
+
+        case XChr value =>
+            returnTypeCheck charType
+
+        case XLet bindings tree =>
+            flatMapTypeCheck (bindings =>
+                let (bindings', contexts) = (unzip bindings) in
+                flatMapTypeCheck (context =>
+                    flatMapTypeCheck (_ =>
+                        runWith context (typeCheck tree)
+                    ) (sequenceTypeCheck (map ((left, right) =>
+                        flatMapTypeCheck (right =>
+                            unifyTypes left right
+                        ) (runWith context (typeCheck right))
+                    ) bindings'))
+                ) (foldLeft (previous => next =>
+                    flatMapTypeCheck (previous =>
+                        typeCheckFromIO (combineTypeContext previous next)
+                    ) previous
+                ) getTypeCheckContext contexts)
+            ) (sequenceTypeCheck (map ((left, right) =>
+                mapTypeCheck ((ptype, context) => ((ptype, right), context)) (bind left)
+            ) bindings))
+
+        case XData left right tree =>
+            flatMapTypeCheck ((tcons, tvars) =>
+                flatMapTypeCheck (context =>
+                    runWith context (typeCheck tree)
+                ) (foldLeft (previous => next =>
+                    flatMapTypeCheck (previous =>
+                        enterDataConstructor tvars tcons next previous
+                    ) previous
+                ) getTypeCheckContext right)
+            ) (getTypeConstructor left)
+    },
+
+    enterDataConstructor = tvars => type => tree => context =>
+        let helper = tree => tree match {
+            case XApp left right =>
+                flatMapTypeCheck (right =>
+                    mapTypeCheck ((name, left) =>
+                        (name, Cons right left)
+                    ) (helper left)
+                ) (typeFromTree tvars right)
+            case XVar name =>
+                if (isCapitalized name)
+                    (returnTypeCheck (name, Nil))
+                    (failTypeCheck (format "'%s' is not a valid name for a data constructor" name))
+            case _ => failTypeCheck "illegal data constructor"
+        } in flatMapTypeCheck ((name, types) =>
+            let dtype = foldRight TypeFun type (reverse types) in
+                insertType name dtype context
+        ) (helper tree),
+
+    getTypeConstructor = tree => let helper = tree => tree match {
+        case XApp left (XVar name) =>
+            if (isCapitalized name)
+                (failTypeCheck (format "'%s' is not a valid name for a type variable" name))
+                (flatMapTypeCheck ((left, tvars) =>
+                    flatMapTypeCheck (context =>
+                        mapTypeCheck (tvar =>
+                            (TypeApp left tvar, Cons (name, tvar) tvars)
+                        ) (typeCheckFromIO (newTypeVar context))
+                    ) getTypeCheckContext
+                ) (helper left))
+        case XVar name =>
+            if (isCapitalized name)
+                (returnTypeCheck (TypeName name, Nil))
+                (failTypeCheck (format "'%s' is not a valid name for a type constructor"))
+    } in mapTypeCheck ((tcons, tvars) => (tcons, reverse tvars)) (helper tree),
+
+    bind = tree => flatMapTypeCheck (context =>
+        let helper = tree => context => tree match {
+            case XVar name =>
+                if (isCapitalized name)
+                    (fetchType name context) match {
+                        case Some type => mapTypeCheck (type => (type, context)) (freshType type)
+                        case None => failTypeCheck (format "unknown data destructor '%s'" name)
+                    }
+                    ((fetchType name context) match {
+                        case Some type =>
+                            mapTypeCheck (type => (type, context)) (freshType type)
+                        case None =>
+                            mapTypeCheck (mvar =>
+                                (mvar, insertType name mvar context)
+                            ) (typeCheckFromIO (newTypeVar context))
+                    })
+
+            case XApp left right =>
+                flatMapTypeCheck ((ltype, lcontext) =>
+                flatMapTypeCheck ((rtype, rcontext) =>
+                    ltype match {
+                        case TypeFun lleft lright =>
+                            flatMapTypeCheck (_ =>
+                                mapTypeCheck (context =>
+                                    (lright, context)
+                                ) (typeCheckFromIO (combineTypeContext lcontext rcontext))
+                            ) (unifyTypes lleft rtype)
+                        case _ =>
+                            failTypeCheck (format "illegal data destruction '%s'" (showType (TypeApp ltype rtype)))
+                    }
+                ) (helper right lcontext)
+                ) (helper left context)
+
+            case XAnn left right =>
+                flatMapTypeCheck ((ltype, lcontext) =>
+                    flatMapTypeCheck (rtype =>
+                        mapTypeCheck (_ => (rtype, lcontext)) (unifyTypes ltype rtype)
+                    ) (typeFromTree Nil right)
+                ) (helper left context)
+
+            case XTuple values =>
+                mapTypeCheck ((types, context) =>
+                    (TypeTuple types, context)
+                ) (foldLeft (previous => next =>
+                    flatMapTypeCheck ((previous, context) =>
+                        mapTypeCheck ((next, context) =>
+                            (Cons next previous, context)
+                        ) (helper next context)
+                    ) previous
+                ) (returnTypeCheck (Nil, context)) values)
+
+            case XNum value =>
+                if (< value 0)
+                    (returnTypeCheck (integerType, context))
+                    (returnTypeCheck (naturalType, context))
+
+            case XChr _ =>
+                returnTypeCheck (charType, context)
+
+        } in helper tree context
+    ) getTypeCheckContext
+in
+
+let runTree = tree => flatMapIO (tree =>
+        flatMapIO (type => type match {
+            case Success type =>
+                mapIO (_ => translate tree) (printf ": %s\n" (showType type))
+            case Failure error =>
+                failIO error
+        }) (runWithEmptyTypeContext (flatMapTypeCheck zonkType (typeCheck tree)))
+    ) (resolveImport tree),
+
+    resolveImport = tree => tree match {
+        case XAbs left right =>
+            flatMapIO (left =>
+                mapIO (right =>
+                    XAbs left right
+                ) (resolveImport right)
+            ) (resolveImport left)
+
+        case XApp left right =>
+            flatMapIO (left =>
+                mapIO (right =>
+                    XApp left right
+                ) (resolveImport right)
+            ) (resolveImport left)
+
+        case XAnn left right =>
+            flatMapIO (left =>
+                mapIO (right =>
+                    XAnn left right
+                ) (resolveImport right)
+            ) (resolveImport left)
+
+        case XMatch value cases =>
+            flatMapIO (value =>
+                mapIO (cases =>
+                    XMatch value cases
+                ) (sequenceIO (map resolveImport cases))
+            ) (resolveImport value)
+
+        case XTuple values =>
+            mapIO XTuple (sequenceIO (map resolveImport values))
+
+        case XLet bindings tree =>
+            let f = (left, right) => flatMapIO (left =>
+                mapIO (right =>
+                    (left, right)
+                ) (resolveImport right)
+            ) (resolveImport left) in
+                flatMapIO (bindings =>
+                    mapIO (XLet bindings) (resolveImport tree)
+                ) (sequenceIO (map f bindings))
+
+        case XData left right tree =>
+            mapIO (XData left right) (resolveImport tree)
+
+        case XImport path rest =>
+            flatMapIO (content =>
+                (parseAll parseXTree (++ content (Cons ' ' rest))) match {
+                    case ParseSuccess result _ =>
+                        resolveImport result
+                    case ParseFailure error _ => failIO error
+                    case ParseError error _ => failIO error
+                }
+            ) (readFile path)
+
+        case other => returnIO other
+} in
+
+macro f = content => (parseAll parseXTree content) match {
+    case ParseSuccess result _ =>
+        runTree result
+    case ParseFailure error _ => failIO error
+    case ParseError error _ => failIO error
+} in
+
+import "bootstrap/prelude.typed.lm" in

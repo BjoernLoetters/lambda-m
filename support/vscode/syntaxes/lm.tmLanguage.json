@@ -1,0 +1,164 @@
+{
+	"name": "Lambda-M Language",
+	"scopeName": "source.lm",
+	"fileTypes": [".lm"],
+    "patterns": [
+        {
+            "include": "#expression"
+        }
+    ],
+	"repository": {
+        "tuple": {
+            "begin": "\\(",
+            "beginCaptures": {
+                "0": {
+                    "name": "tuple.lm"
+                }
+            },
+            "end": "\\)",
+            "endCaptures": {
+                "0": {
+                    "name": "tuple.lm"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#expression"
+                }
+            ]
+        },
+
+        "list": {
+            "begin": "\\[",
+            "beginCaptures": {
+                "0": {
+                    "name": "list.lm"
+                }
+            },
+            "end": "\\]",
+            "endCaptures": {
+                "0": {
+                    "name": "list.lm"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#expression"
+                }
+            ]
+        },
+
+        "keyword1": {
+            "name": "keyword.alphanumeric.lm",
+            "match": "\\s*(let|data|in|macro|case|import|match)\\b"
+        },
+
+        "keyword2": {
+            "name": "keyword.symbolic.lm",
+            "match": "\\s*(=>|=|,|\\|)\\s*"
+        },
+
+        "alphanumericUpper": {
+            "name": "variable.alphanumeric.upper.lm",
+            "match": "\\s*([A-Z][a-zA-Z0-9]*[']*)\\b"
+        },
+
+        "alphanumericLower": {
+            "name": "variable.alphanumeric.lower.lm",
+            "match": "\\s*([a-z][a-zA-Z0-9]*[']*)\\b"
+        },
+
+        "symbolic": {
+            "name": "variable.symbolic.lm",
+            "match": "\\s*(?!(=>|=|,|\\|))([-+*~#:.$%&/\\=?!^°<>|@][-+*~#:.$%&/\\=?!^°<>|@0-9]*[']*)\\s*"
+        },
+
+        "numberLiteral": {
+            "name": "literal.number.lm",
+            "match": "\\s*[0-9]+"
+        },
+
+        "charLiteral": {
+            "name": "literal.character.lm",
+			"begin": "(?!([a-zA-Z0-9']))\\s*'",
+			"beginCaptures": {
+				"0": {
+					"name": "literal.character.start.lm"
+				}
+			},
+			"end": "(\\')|((?:[^\\\\\\n])$)",
+			"endCaptures": {
+				"1": {
+					"name": "literal.character.end.lm"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#string-character-escape"
+				}
+			]
+        },
+
+        "stringLiteral": {
+			"name": "literal.string.lm",
+			"begin": "\"",
+			"beginCaptures": {
+				"0": {
+					"name": "literal.string.start.lm"
+				}
+			},
+			"end": "(\")|((?:[^\\\\\\n])$)",
+			"endCaptures": {
+				"1": {
+					"name": "literal.string.end.lm"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#string-character-escape"
+				}
+			]
+        },
+        
+        "string-character-escape": {
+			"name": "literal.escape.lm",
+			"match": "\\\\."
+		},
+
+        "expression": {
+            "name": "expression.lm",
+            "patterns": [
+                {
+                    "include": "#tuple"
+                },
+                {
+                    "include": "#list"
+                },
+                {
+                    "include": "#charLiteral"
+                },
+                {
+                    "include": "#numberLiteral"
+                },
+                {
+                    "include": "#stringLiteral"
+                },
+                {
+                    "include": "#keyword1"
+                },
+                {
+                    "include": "#alphanumericUpper"
+                },
+                {
+                    "include": "#alphanumericLower"
+                },
+                {
+                    "include": "#symbolic"
+                },
+                {
+                    "include": "#keyword2"
+                }
+            ]
+        }
+	}
+}
