@@ -123,7 +123,7 @@ Cons 1 (Cons 2 (Cons 3 Nil)) match {
 
 The main feature of λ<sub>M</sub> is its ability to change its own syntax and semantics with the help of the `macro`-system. One can imagine a macro as a function which accepts the rest of the program as a string and returns the replacement for the rest of the program as a syntax tree of λ<sub>M</sub>. To be able to read from files or to perform other side effects a macro returns the syntax tree wrapped in an IO monad.
 
-The following example shows a program, which evaluates to `42`. Regardless of the string `"hello world"` which follows after the `in`, the macro replaces the rest of the program by `42` (represented by the syntax tree node `XNum 42`).
+The following example shows a program, which evaluates to `42`. Regardless of the string `"hello world"` which follows after the `in`, the macro replaces the rest of the program by `42` (represented by the syntax tree node `Num 42`).
 ```
 macro f = content => returnIO (Num 42) in 
 
