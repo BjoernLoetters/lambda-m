@@ -1,8 +1,2 @@
 data List a = Cons a (List a) | Nil in
-
-let id = x => x in 
-
-let map = f => xs => xs match {
-    case Cons hd tl => Cons (f hd) (map f tl)
-    case Nil => Nil
-} in
+data Boolean = True | False in

@@ -745,6 +745,7 @@ in
 let integerType = TypeName "Integer",
     naturalType = TypeName "Natural",
     charType = TypeName "Char",
+    booleanType = TypeName "Boolean",
     unitType = TypeTuple Nil,
     showType = let letters = map toChar (range (toInt 'a') (toInt 'z') 1) in type => type match {
         case TypeVar id ref =>
@@ -824,11 +825,62 @@ let returnTypeCheck = value => TypeCheck (context => returnIO (Success value)),
     runWith = context => TypeCheck f => TypeCheck (_ => f context),
     runTypeCheck = TypeCheck f => context => f context,
     runWithEmptyTypeContext = typeCheck => flatMapIO (runTypeCheck typeCheck) emptyTypeContext,
+    runWithStandardTypeContext = typeCheck => flatMapIO (runTypeCheck typeCheck) standardTypeContext,
     sequenceTypeCheck = list => mapTypeCheck reverse (foldLeft (acc => next =>
         flatMapTypeCheck (previous => mapTypeCheck (swap Cons previous) next) acc
     ) (returnTypeCheck Nil) list),
     getTypeCheckContext = TypeCheck (context => returnIO (Success context)),
-    typeCheckFromIO = io => TypeCheck (_ => mapIO Success io)
+    typeCheckFromIO = io => TypeCheck (_ => mapIO Success io),
+
+    standardTypeContext = flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+        flatMapIO (context =>
+            returnIO context
+        ) (enterWithTypeVariables "if" context 1 ([a] => TypeFun booleanType (TypeFun a (TypeFun a a))))
+        ) (enterWithTypeVariables "<=" context 0 ([] => TypeFun naturalType (TypeFun naturalType booleanType)))
+        ) (enterWithTypeVariables ">=" context 0 ([] => TypeFun naturalType (TypeFun naturalType booleanType)))
+        ) (enterWithTypeVariables ">" context 0 ([] => TypeFun naturalType (TypeFun naturalType booleanType)))
+        ) (enterWithTypeVariables "<" context 0 ([] => TypeFun naturalType (TypeFun naturalType booleanType)))
+        ) (enterWithTypeVariables "==" context 2 ([a, b] => TypeFun a (TypeFun b booleanType)))
+        ) (enterWithTypeVariables "%" context 0 ([] => TypeFun naturalType (TypeFun naturalType naturalType)))
+        ) (enterWithTypeVariables "/" context 0 ([] => TypeFun naturalType (TypeFun naturalType naturalType)))
+        ) (enterWithTypeVariables "*" context 0 ([] => TypeFun naturalType (TypeFun naturalType naturalType)))
+        ) (enterWithTypeVariables "-" context 0 ([] => TypeFun naturalType (TypeFun naturalType naturalType)))
+        ) (enterWithTypeVariables "+" context 0 ([] => TypeFun naturalType (TypeFun naturalType naturalType)))
+        ) (enterWithTypeVariables "second" context 2 ([a, b] => TypeFun (TypeTuple [a, b]) b))
+        ) (enterWithTypeVariables "first" context 2 ([a, b] => TypeFun (TypeTuple [a, b]) a))
+        ) (enterWithTypeVariables "uncurry" context 3 ([a, b, c] => TypeFun (TypeFun a (TypeFun b c)) (TypeFun (TypeTuple [a, b]) c)))
+        ) (enterWithTypeVariables "curry" context 3 ([a, b, c] => TypeFun (TypeFun (TypeTuple [a, b]) c) (TypeFun a (TypeFun b c))))
+        ) (enterWithTypeVariables "swap" context 3 ([a, b, c] => TypeFun (TypeFun a (TypeFun b c)) (TypeFun b (TypeFun a c))))
+        ) (enterWithTypeVariables "andThen" context 3 ([a, b, c] => TypeFun (TypeFun a b) (TypeFun (TypeFun b c) (TypeFun a c))))
+        ) (enterWithTypeVariables "compose" context 3 ([a, b, c] => TypeFun (TypeFun b c) (TypeFun (TypeFun a b) (TypeFun a c))))
+        ) (enterWithTypeVariables "identity" context 1 ([x] => TypeFun x x))
+        ) (enterWithTypeVariables "id" context 1 ([x] => TypeFun x x))
+    ) emptyTypeContext,
+
+    enterWithTypeVariables = name => context => n => f =>
+        mapIO (type => insertType name type context) (withTypeVariables context n f),
+
+    withTypeVariables = context => n => f =>
+        mapIO f (sequenceIO (map (_ => newTypeVar context) (range 1 n 1)))
 in
 
 let zonkType = type =>
@@ -1197,7 +1249,7 @@ let runTree = tree => flatMapIO (tree =>
                 mapIO (_ => translate tree) (printf ": %s\n" (showType type))
             case Failure error =>
                 failIO error
-        }) (runWithEmptyTypeContext (flatMapTypeCheck zonkType (typeCheck tree)))
+        }) (runWithStandardTypeContext (flatMapTypeCheck zonkType (typeCheck tree)))
     ) (resolveImport tree),
 
     resolveImport = tree => tree match {
