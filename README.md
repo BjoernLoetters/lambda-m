@@ -125,7 +125,7 @@ The main feature of λ<sub>M</sub> is its ability to change its own syntax and s
 
 The following example shows a program, which evaluates to `42`. Regardless of the string `"hello world"` which follows after the `in`, the macro replaces the rest of the program by `42` (represented by the syntax tree node `XNum 42`).
 ```
-macro f = content => returnIO (XNum 42) in 
+macro f = content => returnIO (Num 42) in 
 
 "hello world"
 ```
