@@ -9,11 +9,12 @@
 5. [The Macro System](#the-macro-system)
 6. [Build Instructions](#build-instructions)
 7. [A Note about Performance](#a-note-about-performance)
-8. [Contribution](#contribution)
+8. [Syntax Highlighting in Visual Studio Code](#syntax-highlighting-in-visual-studio-code)
+9. [Contribution](#contribution)
 
 ## Introduction
 
-λ<sub>M</sub> is a lazy and untyped general purpose programming language with a very small kernel (hereinafter referred to as kernel language). 
+λ<sub>M</sub> is a lazy and untyped experimental programming language with a very small kernel (hereinafter referred to as kernel language).
 
 This project was created in the summer of 2018 as part of the module "Kernel Languages" at the university of applied science [Technische Hochschule Mittelhessen](https://www.thm.de/).
 
@@ -79,7 +80,9 @@ letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
 
 ## Data Constructors and Pattern Matching
 
-Except numbers, characters and tuples there are no built-in data types. Which means, that even booleans are introduced by the prelude. In order to still be able to add and use control structures like `if` it is possible to match on arbitrary data. For further explanation consider the following example:
+There are no built-in data types&ast; other than numbers, characters and tuples. Which means, that even booleans are introduced by the prelude. In order to still be able to add and use control structures like `if` it is possible to match on arbitrary data. For further explanation consider the following example.
+
+> &ast; To be precise, there are no data types (neither statically nor dynamically) in λ<sub>M</sub> at all. Whenever we talk about the datatype of a value, we conceptually talk about the kind of that value. We use the phrase "datatype" to identify values with common properties. For that reason, a `data`-definition does not introduce a type constructor (as it common in languages with algebraic data types). One could call those `data`-definitions "algebraic data constructors".
 
 ```
 data True | False in
@@ -92,9 +95,7 @@ let if = test => then => else => test match {
 if True 0 1
 ```
 
-Note that there are no types (neither statically nor dynamically) in λ<sub>M</sub>. Therefore a `data`-definition does not introduce a type constructor. One could call those data definitions "algebraic data constructors".
-
-The example above shows how `if` may be implemented only using pattern match as a built-in tool. The result of the expression above should be `0`. 
+The example above shows how `if` may be implemented only using pattern matching. The result of the expression above is always `0`. 
 
 A more complex pattern match can be seen in the following example: 
 ```
@@ -106,9 +107,9 @@ data Cons head tail | Nil in
 }
 ```
 
-The result of this example should be `"world"`, since the first pattern does not match (the first value of the twos-tuple is 'a' but the pattern expects it to be 'b'). An underscore behaves like a variable binder, but ignores the value.
+The result of this example should be `"world"`, since the first pattern does not match (the first value of the twos-tuple is `'a'` but the pattern expects it to be `'b'`). An underscore `_` behaves like a variable binder, but ignores the value.
 
-Strings and list literals are translated to a sequence of `Cons` applications, meaning that `"hello"` is translated to `Cons 'h' (Cons 'e' (Cons 'l' (Cons 'l' (Cons 'o' Nil))))`. So without strings and list literals a pattern match may also be written like:
+Strings and list literals are translated to a sequence of `Cons` applications, meaning that `"hello"` is translated to `Cons 'h' (Cons 'e' (Cons 'l' (Cons 'l' (Cons 'o' Nil))))`. Without strings and list literals a pattern match may also be written like:
 
 ```
 data Cons head tail | Nil in
@@ -120,7 +121,7 @@ Cons 1 (Cons 2 (Cons 3 Nil)) match {
 
 ## The Macro System
 
-The main feature of λ<sub>M</sub> is its ability to change its own syntax and semantics with the help of the `macro`-syntax. One can imagine a macro as a function which accepts the rest of the program as a string and returns the replacement for the rest of the program as a syntax tree of λ<sub>M</sub> itself. To be able to read from files or to perform other side effects a macro returns the syntax tree wrapped in an IO monad.
+The main feature of λ<sub>M</sub> is its ability to change its own syntax and semantics with the help of the `macro`-system. One can imagine a macro as a function which accepts the rest of the program as a string and returns the replacement for the rest of the program as a syntax tree of λ<sub>M</sub>. To be able to read from files or to perform other side effects a macro returns the syntax tree wrapped in an IO monad.
 
 The following example shows a program, which evaluates to `42`. Regardless of the string `"hello world"` which follows after the `in`, the macro replaces the rest of the program by `42` (represented by the syntax tree node `XNum 42`).
 ```
@@ -145,6 +146,12 @@ After the prompt `>` has appeared, you can enter arbitrary terms. Side effects m
 In its current version λ<sub>M</sub> is very slow, since it implements a statically typed version of itself with parser combinators (as it can be seen in the [prelude](bootstrap/prelude.lm)). In Addition, strings are encoded as lists of characters, which is very convenient but also very slow.
 
 If you are interested in performance optimizations, feel free to apply some improvements. ;-)
+
+## Syntax Highlighting in Visual Studio Code
+
+There is a directory [support/vscode](https://github.com/kuchenkruste/lambda-m/tree/master/support/vscode) which contains TextMate files for syntax highlighting in [Visual Studio Code](https://github.com/Microsoft/vscode). Simply copy this directory into the extension directory of your VS Code installation and you should be able to choose syntax highlighting for "Lambda-M" (you may have to restart VS Code though).
+
+![Example Syntax Highlighting](example-syntax-highlighting.png)
 
 ## Contribution
 
